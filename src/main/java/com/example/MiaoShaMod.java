@@ -77,7 +77,7 @@ public class MiaoShaMod implements ModInitializer {
             content.add(MIAOSHA_SWORD);
             content.add(MIAOSHA_ERASE_SWORD);
         });
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.MISC).register(content -> {
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register(content -> {
             content.add(UNKILLABLE_SPAWN_EGG);
         });
 
