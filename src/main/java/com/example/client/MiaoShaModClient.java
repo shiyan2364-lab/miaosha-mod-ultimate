@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.LiteralText;
 import org.lwjgl.glfw.GLFW;
 
 public class MiaoShaModClient implements ClientModInitializer {
@@ -27,9 +28,9 @@ public class MiaoShaModClient implements ClientModInitializer {
             while (timeStopKey.wasPressed()) {
                 MiaoShaMod.TIME_STOPPED = !MiaoShaMod.TIME_STOPPED;
                 if (MiaoShaMod.TIME_STOPPED) {
-                    client.player.sendMessage(new net.minecraft.text.LiteralText("Time stopped!", false));
+                    client.player.sendMessage(new LiteralText("Time stopped!"));
                 } else {
-                    client.player.sendMessage(new net.minecraft.text.LiteralText("Time resumed!", false));
+                    client.player.sendMessage(new LiteralText("Time resumed!"));
                 }
             }
         });
