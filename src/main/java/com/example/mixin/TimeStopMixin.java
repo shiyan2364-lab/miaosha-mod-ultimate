@@ -14,7 +14,7 @@ public abstract class TimeStopMixin {
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void miaosha$freezeTime(CallbackInfo ci) {
         // 时停开启，且当前实体不是玩家，则取消 tick（冻结）
-        if (MiaoShaMod.TIME_STOPPED && !(this instanceof PlayerEntity)) {
+        if (MiaoShaMod.TIME_STOPPED && !((Object) this instanceof PlayerEntity)) {
             ci.cancel();
         }
     }

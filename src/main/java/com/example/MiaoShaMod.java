@@ -12,8 +12,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterials;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
@@ -57,14 +57,14 @@ public class MiaoShaMod implements ModInitializer {
         );
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (world.isClient) return ActionResult.PASS;
             ItemStack held = player.getStackInHand(hand);
+            if (world.isClient) return TypedActionResult.pass(held);
             Identifier heldId = Registry.ITEM.getId(held.getItem());
             if (heldId.equals(new Identifier(MOD_ID, "miaosha_erase_sword"))) {
                 eraseArea(player);
-                return ActionResult.SUCCESS;
+                return TypedActionResult.success(held);
             }
-            return ActionResult.PASS;
+            return TypedActionResult.pass(held);
         });
 
         LOGGER.info("MiaoSha Mod Ultimate loaded [MC 1.16.5] - Two swords + area erase + time stop!");
