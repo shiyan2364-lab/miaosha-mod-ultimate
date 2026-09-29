@@ -19,7 +19,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterials;
-import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -52,7 +51,6 @@ public class MiaoShaMod implements ModInitializer {
 
     public static final Set<UUID> ERASED_ENTITIES = new HashSet<>();
 
-    /** 时停状态：true=已停止 */
     public static boolean TIME_STOPPED = false;
 
     @Override
@@ -132,17 +130,16 @@ public class MiaoShaMod implements ModInitializer {
     }
 
     /**
-     * 终极抹除：多重手段硬移除（绕过一切覆写/防御）
+     * 终极抹除：纯反射兼容 1.16.5。
      * 1. 反射清零血量
-     * 2. 反射直接设 removed=true（绕过子类覆写）
-     * 3. 反射调用 setRemoved(DISCARDED) 走引擎强制移除
-     * 4. 从世界 EntityList 摘除
-     * 5. 发包强制客户端移除
+     * 2. 反射设 removed=true
+     * 3. 反射调用 setRemoved(DISCARDED)
+     * 4. 从 tick 列表 / entityList 摘除
+     * 5. 反射发包
      */
     public static void hardErase(Entity entity) {
         if (entity == null) return;
 
-        // 1. 反射清零血量
         if (entity instanceof LivingEntity) {
             try {
                 Field f = LivingEntity.class.getDeclaredField("health");
@@ -151,25 +148,23 @@ public class MiaoShaMod implements ModInitializer {
             } catch (Exception ignored) {}
         }
 
-        // 2. 反射直接设 removed=true（绕过所有覆写）
         try {
             Field rf = Entity.class.getDeclaredField("removed");
             rf.setAccessible(true);
             rf.setBoolean(entity, true);
         } catch (Exception ignored) {}
 
-        // 3. 反射调用 setRemoved(DISCARDED)
         try {
-            Method m = Entity.class.getDeclaredMethod("setRemoved", Entity.RemovalReason.class);
+            Class<?> removalReasonClass = Class.forName("net.minecraft.entity.Entity$RemovalReason");
+            Object discarded = Enum.valueOf((Class<? extends Enum>) removalReasonClass, "DISCARDED");
+            Method m = Entity.class.getDeclaredMethod("setRemoved", removalReasonClass);
             m.setAccessible(true);
-            m.invoke(entity, Entity.RemovalReason.DISCARDED);
+            m.invoke(entity, discarded);
         } catch (Exception ignored) {}
 
-        // 4. 釜底抽薪：从世界底层容器中彻底摘除（不再 tick → 无法自我修复）
         if (entity.world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) entity.world;
 
-            // 4.1 从服务端 tick 列表摘除（核心：连 tick 的机会都没有）
             try {
                 Field tl = ServerWorld.class.getDeclaredField("entityTickList");
                 tl.setAccessible(true);
@@ -191,7 +186,6 @@ public class MiaoShaMod implements ModInitializer {
                 }
             } catch (Exception ignored) {}
 
-            // 4.2 从世界 EntityList 摘除
             try {
                 Field el = net.minecraft.world.World.class.getDeclaredField("entityList");
                 el.setAccessible(true);
@@ -212,24 +206,31 @@ public class MiaoShaMod implements ModInitializer {
                     }
                 }
             } catch (Exception ignored) {}
-
-            // 4.3 调用原版 onRemove 触发区块存储清理
-            try {
-                Method m = Entity.class.getDeclaredMethod("onRemove", Entity.RemovalReason.class);
-                m.setAccessible(true);
-                m.invoke(entity, Entity.RemovalReason.DISCARDED);
-            } catch (Exception ignored) {}
         }
 
-        // 5. 发包强制客户端移除
         if (entity.world instanceof ServerWorld && !entity.world.isClient) {
             ServerWorld serverWorld = (ServerWorld) entity.world;
-            EntitiesDestroyS2CPacket packet = new EntitiesDestroyS2CPacket(entity.getId());
-            for (ServerPlayerEntity player : serverWorld.getPlayers()) {
-                if (player.networkHandler != null) {
-                    player.networkHandler.sendPacket(packet);
+            try {
+                int entityId = entity.hashCode();
+                try {
+                    Field idField = Entity.class.getDeclaredField("id");
+                    idField.setAccessible(true);
+                    entityId = idField.getInt(entity);
+                } catch (Exception ignored) {}
+
+                Class<?> packetClass = Class.forName("net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket");
+                java.lang.reflect.Constructor<?> ctor = packetClass.getDeclaredConstructors()[0];
+                ctor.setAccessible(true);
+                Object packet = ctor.newInstance(new int[]{entityId});
+
+                for (ServerPlayerEntity player : serverWorld.getPlayers()) {
+                    Object networkHandler = player.networkHandler;
+                    if (networkHandler != null) {
+                        Method send = networkHandler.getClass().getMethod("sendPacket", net.minecraft.network.Packet.class);
+                        send.invoke(networkHandler, packet);
+                    }
                 }
-            }
+            } catch (Exception ignored) {}
         }
     }
 }

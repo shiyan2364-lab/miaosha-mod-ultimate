@@ -4,7 +4,9 @@ import com.example.MiaoShaMod;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.entity.PigEntityRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.LiteralText;
 import org.lwjgl.glfw.GLFW;
@@ -15,6 +17,10 @@ public class MiaoShaModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // 注册实体渲染：无敌生物用猪的渲染器
+        EntityRendererRegistry.INSTANCE.register(MiaoShaMod.UNKILLABLE_ENTITY_TYPE,
+                (context) -> new PigEntityRenderer(context));
+
         // 注册 V 键
         timeStopKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.miaosha-mod-ultimate.timestop",
