@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 真·时停（1.16.5）：
- * 1. 冻结 tick → 生物 AI / 动画状态 / 掉落物物理全部停止
- * 2. 冻结 move → 位置永久不动（消除身体抽搐）
+ * 1. 冻结 tick → AI / 状态更新 / 掉落物物理全部停止
+ * 2. 冻结 move → 位置永久不动（消除抽搐）
  * 3. 冻结 setVelocity → 速度不能写入（击退/重力/漂移全失效）
- * 玩家不受影响，可正常行动。
+ * 玩家不受影响。
  */
 @Mixin(Entity.class)
 public abstract class TimeStopMixin {
@@ -27,7 +27,7 @@ public abstract class TimeStopMixin {
     }
 
     @Inject(method = "move", at = @At("HEAD"), cancellable = true)
-    private void miaosha$freezeMove(Entity.MovementType type, Vec3d movement, CallbackInfo ci) {
+    private void miaosha$freezeMove(Entity.MoveType type, Vec3d movement, CallbackInfo ci) {
         if (MiaoShaMod.TIME_STOPPED && !((Object) this instanceof PlayerEntity)) {
             ci.cancel();
         }
