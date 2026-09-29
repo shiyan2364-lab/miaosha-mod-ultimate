@@ -21,15 +21,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterials;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.chunk.Chunk;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.util.math.Vec3d;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -39,53 +39,70 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MiaoShaMod implements ModInitializer {
-
     public static final String MOD_ID = "miaosha-mod-ultimate";
-    public static final Logger LOGGER = LogManager.getLogger("miaosha-mod-ultimate");
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     public static final boolean KILL_PLAYER = true;
+    public static final int CHAIN_RADIUS = 5;
+
     public static Item MIAOSHA_SWORD;
     public static Item MIAOSHA_ERASE_SWORD;
     public static Item UNKILLABLE_SPAWN_EGG;
     public static EntityType<UnkillableEntity> UNKILLABLE_ENTITY_TYPE;
+
     public static final Set<UUID> ERASED_ENTITIES = new HashSet<>();
     public static boolean TIME_STOPPED = false;
 
     @Override
     public void onInitialize() {
-        MIAOSHA_SWORD = Registry.register(Registry.ITEM, new Identifier(MOD_ID, "miaosha_sword"),
+        // 秒杀之剑：一击必杀，掉落保留
+        MIAOSHA_SWORD = Registry.register(Registries.ITEM,
+                net.minecraft.util.Identifier.of(MOD_ID, "miaosha_sword"),
                 new SwordItem(ToolMaterials.DIAMOND, 3, -2.4F,
-                        new Item.Settings().group(ItemGroup.COMBAT)));
-        MIAOSHA_ERASE_SWORD = Registry.register(Registry.ITEM, new Identifier(MOD_ID, "miaosha_erase_sword"),
+                        new Item.Settings()));
+
+        // 湮灭之剑：硬抹除 + 连锁 + 落雷
+        MIAOSHA_ERASE_SWORD = Registry.register(Registries.ITEM,
+                net.minecraft.util.Identifier.of(MOD_ID, "miaosha_erase_sword"),
                 new SwordItem(ToolMaterials.DIAMOND, 3, -0.4F,
-                        new Item.Settings().group(ItemGroup.COMBAT)));
-        UNKILLABLE_ENTITY_TYPE = Registry.register(Registry.ENTITY_TYPE, new Identifier(MOD_ID, "unkillable"),
+                        new Item.Settings()));
+
+        // 无敌生物（猪外观）
+        UNKILLABLE_ENTITY_TYPE = Registry.register(Registries.ENTITY_TYPE,
+                net.minecraft.util.Identifier.of(MOD_ID, "unkillable"),
                 FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, UnkillableEntity::new)
                         .dimensions(EntityDimensions.fixed(0.9F, 0.9F))
                         .trackRangeBlocks(128)
                         .build());
-        FabricDefaultAttributeRegistry.register(UNKILLABLE_ENTITY_TYPE, UnkillableEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, UnkillableEntity.MAX_HEALTH)
-                .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 1.0D)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 0.0D));
-        UNKILLABLE_SPAWN_EGG = Registry.register(Registry.ITEM, new Identifier(MOD_ID, "unkillable_spawn_egg"),
-                new SpawnEggItem(UNKILLABLE_ENTITY_TYPE, 0xFFB6C1, 0xCD5C5C,
-                        new Item.Settings().group(ItemGroup.MISC)));
 
+        FabricDefaultAttributeRegistry.register(UNKILLABLE_ENTITY_TYPE,
+                UnkillableEntity.createMobAttributes()
+                        .add(EntityAttributes.GENERIC_MAX_HEALTH, UnkillableEntity.MAX_HEALTH)
+                        .add(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE, 1.0D)
+                        .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 0.0D));
+
+        UNKILLABLE_SPAWN_EGG = Registry.register(Registries.ITEM,
+                net.minecraft.util.Identifier.of(MOD_ID, "unkillable_spawn_egg"),
+                new SpawnEggItem(UNKILLABLE_ENTITY_TYPE, 0xFFB6C1, 0xCD5C5C,
+                        new Item.Settings()));
+
+        // 湮灭剑右键：清除所有已加载区块
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            ItemStack held = player.getStackInHand(hand);
-            if (world.isClient) return TypedActionResult.pass(held);
-            if (Registry.ITEM.getId(held.getItem())
-                    .equals(new Identifier(MOD_ID, "miaosha_erase_sword"))) {
+            ItemStack stack = player.getStackInHand(hand);
+            if (world.isClient) return ActionResult.PASS;
+            if (Registries.ITEM.getId(stack.getItem()).equals(
+                    net.minecraft.util.Identifier.of(MOD_ID, "miaosha_erase_sword"))) {
                 eraseAllLoadedChunks(player);
-                return TypedActionResult.success(held);
+                return ActionResult.SUCCESS;
             }
-            return TypedActionResult.pass(held);
+            return ActionResult.PASS;
         });
-        LOGGER.info("MiaoSha Mod Ultimate loaded [MC 1.16.5] - Global Thunder Erase!");
+
+        LOGGER.info("MiaoSha Mod Ultimate 1.20.1 loaded!");
     }
 
-    /** 清除所有已加载区块（视距内）中的生物与掉落物 */
-    private static void eraseAllLoadedChunks(PlayerEntity player) {
+    /** 湮灭剑右键：清除所有已加载区块中的生物与掉落物 */
+    public static void eraseAllLoadedChunks(PlayerEntity player) {
         if (player.getServer() == null) return;
         int cleared = 0;
         List<String> names = new ArrayList<>();
@@ -101,9 +118,7 @@ public class MiaoShaMod implements ModInitializer {
                     int cz = pcz + dz;
                     if (!world.isChunkLoaded(cx, cz)) continue;
 
-                    Chunk chunk = world.getChunk(cx, cz);
                     Box box = new Box(cx * 16, 0, cz * 16, cx * 16 + 16, 256, cz * 16 + 16);
-
                     List<Entity> entities = world.getOtherEntities(player, box, e -> {
                         if (e instanceof PlayerEntity) return false;
                         return e instanceof LivingEntity || e instanceof ItemEntity;
@@ -113,54 +128,83 @@ public class MiaoShaMod implements ModInitializer {
                         names.add(e.getDisplayName().getString());
                         hardErase(e);
                         cleared++;
-
-                        // 1.16.5 装饰闪电
-                        LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
-                        if (bolt != null) {
-                            bolt.refreshPositionAndAngles(e.getX(), e.getY(), e.getZ(), 0F, 0F);
-                            bolt.setCosmetic(true);
-                            world.spawnEntity(bolt);
-                        }
+                        spawnLightning(world, e.getX(), e.getY(), e.getZ());
                     }
                 }
             }
         }
 
         if (!names.isEmpty()) {
-            String msg;
-            if (names.size() >= 3) {
-                msg = "⚡ 已抹除 " + cleared + " 个目标";
-            } else {
-                msg = "⚡ 已抹除: " + String.join(", ", names);
-            }
-            player.sendMessage(new LiteralText(msg), false);
+            String msg = names.size() >= 3
+                    ? "⚡ 已抹除 " + cleared + " 个目标"
+                    : "⚡ 已抹除: " + String.join(", ", names);
+            player.sendMessage(Text.literal(msg), false);
         }
     }
 
-    /** 湮灭剑：1.16.5 可靠三板斧 + 末影龙原生死亡 */
+    /** 湮灭剑攻击：主目标 + 周围连锁 */
+    public static void chainErase(Entity center, PlayerEntity attacker) {
+        if (center.world.isClient) return;
+        if (!(center.world instanceof ServerWorld sw)) return;
+
+        int count = 0;
+        List<String> names = new ArrayList<>();
+        double r = CHAIN_RADIUS;
+        Box box = new Box(center.getX() - r, center.getY() - r, center.getZ() - r,
+                center.getX() + r, center.getY() + r, center.getZ() + r);
+
+        List<Entity> entities = sw.getOtherEntities(center, box, e -> {
+            if (e instanceof PlayerEntity) return false;
+            return e instanceof LivingEntity || e instanceof ItemEntity;
+        });
+
+        for (Entity e : entities) {
+            if (e == center) continue;
+            names.add(e.getDisplayName().getString());
+            hardErase(e);
+            count++;
+            spawnLightning(sw, e.getX(), e.getY(), e.getZ());
+        }
+
+        if (count > 0 && attacker != null) {
+            String msg = count >= 3
+                    ? "☠ 连锁抹除 " + count + " 个目标"
+                    : "☠ 连锁抹除: " + String.join(", ", names);
+            attacker.sendMessage(Text.literal(msg), false);
+        }
+    }
+
+    private static void spawnLightning(ServerWorld world, double x, double y, double z) {
+        LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
+        if (bolt != null) {
+            bolt.refreshPositionAndAngles(x, y, z, 0F, 0F);
+            bolt.setCosmetic(true);
+            world.spawnEntity(bolt);
+        }
+    }
+
+    /** 湮灭剑：5 重硬抹除（1.20.1 正版 API） */
     public static void hardErase(Entity entity) {
         if (entity == null) return;
 
-        // 末影龙特判：必须走原生死亡流程，才能正常移除血条/开传送门
+        // 末影龙：走原生死亡流程（开传送门/血条消失）
         if (entity instanceof EnderDragonEntity) {
-            try { entity.kill(); } catch (Exception ignored) {}
+            entity.kill();
             return;
         }
 
-        if (entity instanceof LivingEntity) {
+        // 1. 清血
+        if (entity instanceof LivingEntity living) {
             try {
                 Field f = LivingEntity.class.getDeclaredField("health");
                 f.setAccessible(true);
-                f.setFloat(entity, 0F);
-                ((LivingEntity) entity).setHealth(0F);
-                ((LivingEntity) entity).kill();
+                f.setFloat(living, 0F);
             } catch (Exception ignored) {}
+            living.setHealth(0F);
+            living.kill();
         }
-        try {
-            Field rf = Entity.class.getDeclaredField("removed");
-            rf.setAccessible(true);
-            rf.setBoolean(entity, true);
-        } catch (Exception ignored) {}
-        try { entity.remove(); } catch (Exception ignored) {}
+
+        // 2. 强制移除（DISCARDED 直接丢出世界）
+        entity.remove(Entity.RemovalReason.DISCARDED);
     }
 }

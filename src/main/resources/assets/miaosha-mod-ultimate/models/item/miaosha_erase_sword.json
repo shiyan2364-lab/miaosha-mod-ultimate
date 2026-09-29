@@ -1,1 +1,1 @@
-{"parent": "item/handheld", "textures": {"layer0": "miaosha-mod-ultimate:item/entity_remover"}}
+{ "parent": "minecraft:item/handheld", "textures": { "layer0": "miaosha-mod-ultimate:item/miaosha_erase_sword" } }

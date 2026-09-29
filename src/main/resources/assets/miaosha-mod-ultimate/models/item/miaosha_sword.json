@@ -1,1 +1,1 @@
-{"parent": "item/handheld", "textures": {"layer0": "miaosha-mod-ultimate:item/prismal_abyss"}}
+{ "parent": "minecraft:item/handheld", "textures": { "layer0": "miaosha-mod-ultimate:item/miaosha_sword" } }

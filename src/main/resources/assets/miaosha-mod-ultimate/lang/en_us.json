@@ -1,5 +1,8 @@
 {
-    "itemGroup.miaosha-mod-ultimate.weapons": "MiaoSha Weapons",
-    "item.miaosha-mod-ultimate.miaosha_sword": "MiaoSha Sword",
-    "item.miaosha-mod-ultimate.miaosha_erase_sword": "Erase Sword"
+  "item.miaosha-mod-ultimate.miaosha_sword": "Instant Kill Sword",
+  "item.miaosha-mod-ultimate.miaosha_erase_sword": "Erase Sword",
+  "item.miaosha-mod-ultimate.unkillable_spawn_egg": "Unkillable Spawn Egg",
+  "entity.miaosha-mod-ultimate.unkillable": "Unkillable",
+  "key.miaosha-mod-ultimate.timestop": "Time Stop",
+  "key.categories.miaosha-mod-ultimate": "MiaoSha Mod"
 }

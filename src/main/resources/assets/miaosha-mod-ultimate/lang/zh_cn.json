@@ -1,5 +1,8 @@
 {
-    "itemGroup.miaosha-mod-ultimate.weapons": "秒杀武器",
-    "item.miaosha-mod-ultimate.miaosha_sword": "秒杀之剑",
-    "item.miaosha-mod-ultimate.miaosha_erase_sword": "湮灭之剑"
+  "item.miaosha-mod-ultimate.miaosha_sword": "秒杀之剑",
+  "item.miaosha-mod-ultimate.miaosha_erase_sword": "湮灭之剑",
+  "item.miaosha-mod-ultimate.unkillable_spawn_egg": "无敌之盾刷怪蛋",
+  "entity.miaosha-mod-ultimate.unkillable": "无敌之盾",
+  "key.miaosha-mod-ultimate.timestop": "时停",
+  "key.categories.miaosha-mod-ultimate": "秒杀模组"
 }
