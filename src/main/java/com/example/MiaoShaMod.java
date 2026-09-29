@@ -81,12 +81,12 @@ public class MiaoShaMod implements ModInitializer {
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
-            if (world.isClient) return TypedActionResult.pass(held);
+            if (world.isClient) return TypedActionResult.pass(player.getStackInHand(hand));
             if (Registries.ITEM.getId(stack.getItem()).equals(Identifier.of(MOD_ID, "miaosha_erase_sword"))) {
                 eraseAllLoadedChunks(player);
-                return TypedActionResult.success(held);
+                return TypedActionResult.success(player.getStackInHand(hand));
             }
-            return TypedActionResult.pass(held);
+            return TypedActionResult.pass(player.getStackInHand(hand));
         });
 
         LOGGER.info("MiaoSha Mod Ultimate 1.20.1 loaded!");
