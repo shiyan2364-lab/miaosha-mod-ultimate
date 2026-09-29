@@ -16,10 +16,9 @@ import java.lang.reflect.Field;
  * - setHealth(<=0) 忽略
  * - getHealth() 至少返回 1，防止被判定死亡
  * - kill() 空实现，免疫/kill
- * - remove(RemovalReason) 仅在自然死亡(KILLED)时放行，其余全部拦截
+ * - remove(RemovalReason) 仅在自然死亡(KILLED)时放行
  * - isRemoved() 永远 false
  * - setRemoved() 空实现，强移除被拦截
- * - isAlive() 永远 true
  * - tick() 每帧反射修复 health / removed 字段
  */
 public class UnkillableEntity extends PigEntity {

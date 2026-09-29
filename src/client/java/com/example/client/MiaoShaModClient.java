@@ -17,7 +17,6 @@ public class MiaoShaModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // 无敌生物用猪渲染
         EntityRendererRegistry.register(MiaoShaMod.UNKILLABLE_ENTITY_TYPE,
                 PigEntityRenderer::new);
 

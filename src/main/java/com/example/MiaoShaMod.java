@@ -16,7 +16,6 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.item.SwordItem;
@@ -26,8 +25,8 @@ import net.minecraft.registry.Registry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,21 +54,16 @@ public class MiaoShaMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // 秒杀之剑：一击必杀，掉落保留
         MIAOSHA_SWORD = Registry.register(Registries.ITEM,
-                net.minecraft.util.Identifier.of(MOD_ID, "miaosha_sword"),
-                new SwordItem(ToolMaterials.DIAMOND, 3, -2.4F,
-                        new Item.Settings()));
+                Identifier.of(MOD_ID, "miaosha_sword"),
+                new SwordItem(ToolMaterials.DIAMOND, 3, -2.4F, new Item.Settings()));
 
-        // 湮灭之剑：硬抹除 + 连锁 + 落雷
         MIAOSHA_ERASE_SWORD = Registry.register(Registries.ITEM,
-                net.minecraft.util.Identifier.of(MOD_ID, "miaosha_erase_sword"),
-                new SwordItem(ToolMaterials.DIAMOND, 3, -0.4F,
-                        new Item.Settings()));
+                Identifier.of(MOD_ID, "miaosha_erase_sword"),
+                new SwordItem(ToolMaterials.DIAMOND, 3, -0.4F, new Item.Settings()));
 
-        // 无敌生物（猪外观）
         UNKILLABLE_ENTITY_TYPE = Registry.register(Registries.ENTITY_TYPE,
-                net.minecraft.util.Identifier.of(MOD_ID, "unkillable"),
+                Identifier.of(MOD_ID, "unkillable"),
                 FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, UnkillableEntity::new)
                         .dimensions(EntityDimensions.fixed(0.9F, 0.9F))
                         .trackRangeBlocks(128)
@@ -82,16 +76,13 @@ public class MiaoShaMod implements ModInitializer {
                         .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 0.0D));
 
         UNKILLABLE_SPAWN_EGG = Registry.register(Registries.ITEM,
-                net.minecraft.util.Identifier.of(MOD_ID, "unkillable_spawn_egg"),
-                new SpawnEggItem(UNKILLABLE_ENTITY_TYPE, 0xFFB6C1, 0xCD5C5C,
-                        new Item.Settings()));
+                Identifier.of(MOD_ID, "unkillable_spawn_egg"),
+                new SpawnEggItem(UNKILLABLE_ENTITY_TYPE, 0xFFB6C1, 0xCD5C5C, new Item.Settings()));
 
-        // 湮灭剑右键：清除所有已加载区块
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
             if (world.isClient) return ActionResult.PASS;
-            if (Registries.ITEM.getId(stack.getItem()).equals(
-                    net.minecraft.util.Identifier.of(MOD_ID, "miaosha_erase_sword"))) {
+            if (Registries.ITEM.getId(stack.getItem()).equals(Identifier.of(MOD_ID, "miaosha_erase_sword"))) {
                 eraseAllLoadedChunks(player);
                 return ActionResult.SUCCESS;
             }
@@ -101,7 +92,6 @@ public class MiaoShaMod implements ModInitializer {
         LOGGER.info("MiaoSha Mod Ultimate 1.20.1 loaded!");
     }
 
-    /** 湮灭剑右键：清除所有已加载区块中的生物与掉落物 */
     public static void eraseAllLoadedChunks(PlayerEntity player) {
         if (player.getServer() == null) return;
         int cleared = 0;
@@ -142,10 +132,9 @@ public class MiaoShaMod implements ModInitializer {
         }
     }
 
-    /** 湮灭剑攻击：主目标 + 周围连锁 */
     public static void chainErase(Entity center, PlayerEntity attacker) {
-        if (center.world.isClient) return;
-        if (!(center.world instanceof ServerWorld sw)) return;
+        if (center.getWorld().isClient) return;
+        if (!(center.getWorld() instanceof ServerWorld sw)) return;
 
         int count = 0;
         List<String> names = new ArrayList<>();
@@ -183,17 +172,14 @@ public class MiaoShaMod implements ModInitializer {
         }
     }
 
-    /** 湮灭剑：5 重硬抹除（1.20.1 正版 API） */
     public static void hardErase(Entity entity) {
         if (entity == null) return;
 
-        // 末影龙：走原生死亡流程（开传送门/血条消失）
         if (entity instanceof EnderDragonEntity) {
             entity.kill();
             return;
         }
 
-        // 1. 清血
         if (entity instanceof LivingEntity living) {
             try {
                 Field f = LivingEntity.class.getDeclaredField("health");
@@ -204,7 +190,6 @@ public class MiaoShaMod implements ModInitializer {
             living.kill();
         }
 
-        // 2. 强制移除（DISCARDED 直接丢出世界）
         entity.remove(Entity.RemovalReason.DISCARDED);
     }
 }
