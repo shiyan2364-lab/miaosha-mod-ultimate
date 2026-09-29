@@ -15,7 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 通杀核心：注入玩家"攻击"入口 PlayerEntity.attack(Entity)
- * 湮灭剑使用 hardErase 终极抹除，秒杀剑仅限伤。
+ * 湮灭剑 → hardErase 硬抹除
+ * 秒杀剑 → setHealth(0.01) 一击必杀（掉落保留）
  */
 @Mixin(PlayerEntity.class)
 public abstract class PlayerAttackMixin {
@@ -39,7 +40,6 @@ public abstract class PlayerAttackMixin {
 
         if (isErase) {
             if (living instanceof PlayerEntity && !MiaoShaMod.KILL_PLAYER) return;
-            // 终极抹除：5步硬移除
             MiaoShaMod.hardErase(living);
             MiaoShaMod.LOGGER.info("{} UNIVERSAL-ERASED by attack", living.getDisplayName().getString());
         } else {

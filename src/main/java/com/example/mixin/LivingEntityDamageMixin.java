@@ -1,7 +1,6 @@
 package com.example.mixin;
 
 import com.example.MiaoShaMod;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,13 +21,12 @@ public abstract class LivingEntityDamageMixin {
 
         PlayerEntity attacker = (PlayerEntity) source.getAttacker();
         LivingEntity self = (LivingEntity) (Object) this;
-
         if (self == attacker) return;
 
         ItemStack held = attacker.getMainHandStack();
         Identifier heldId = Registry.ITEM.getId(held.getItem());
 
-        // ===== 湮灭之剑：终极抹除 =====
+        // 湮灭之剑：硬抹除
         if (heldId.equals(new Identifier("miaosha-mod-ultimate", "miaosha_erase_sword"))) {
             if (self instanceof PlayerEntity) {
                 if (!MiaoShaMod.KILL_PLAYER) return;
@@ -38,15 +36,13 @@ public abstract class LivingEntityDamageMixin {
                 cir.cancel();
                 return;
             }
-            // 终极抹除：5步硬移除
             MiaoShaMod.hardErase(self);
             cir.setReturnValue(true);
             cir.cancel();
-            MiaoShaMod.LOGGER.info("{} was HARD-ERASED", self.getDisplayName().getString());
             return;
         }
 
-        // ===== 秒杀之剑：一击必杀（掉落保留） =====
+        // 秒杀之剑：一击必杀（掉落保留）
         if (heldId.equals(new Identifier("miaosha-mod-ultimate", "miaosha_sword"))) {
             if (self instanceof PlayerEntity && !MiaoShaMod.KILL_PLAYER) return;
             self.setHealth(0.01f);
