@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PigEntity;
