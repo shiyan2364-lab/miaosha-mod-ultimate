@@ -17,7 +17,6 @@ import java.lang.reflect.Field;
  * - remove() 完全忽略
  * - isRemoved() 永远 false（防止引擎判定已移除）
  * - kill() 拒绝
- * - teleport() 拒绝（防被传虚空）
  * - tick() 每帧反射修复 health/removed 字段
  * 血量 2000，纯被动无攻击。
  */
@@ -73,7 +72,9 @@ public class UnkillableEntity extends PigEntity {
 
     @Override
     public float getHealth() {
-        return this.health <= 0.0F ? 1.0F : this.health;
+        // 即使底层血量变成 0，对外读出来至少是 1，避免被判定死亡
+        float real = super.getHealth();
+        return real <= 0.0F ? 1.0F : real;
     }
 
     @Override
@@ -89,10 +90,5 @@ public class UnkillableEntity extends PigEntity {
     @Override
     public void kill() {
         // 免疫 /kill
-    }
-
-    @Override
-    public void teleport(double x, double y, double z) {
-        // 防虚空传送：拒绝
     }
 }
