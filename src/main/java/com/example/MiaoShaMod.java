@@ -91,8 +91,8 @@ public class MiaoShaMod implements ModInitializer {
 
         for (ServerWorld world : player.getServer().getWorlds()) {
             int viewDist = player.getServer().getPlayerManager().getViewDistance();
-            int pcx = player.getBlockX() >> 4;
-            int pcz = player.getBlockZ() >> 4;
+            int pcx = (int) Math.floor(player.getX()) >> 4;
+            int pcz = (int) Math.floor(player.getZ()) >> 4;
 
             for (int dx = -viewDist; dx <= viewDist; dx++) {
                 for (int dz = -viewDist; dz <= viewDist; dz++) {
@@ -103,7 +103,7 @@ public class MiaoShaMod implements ModInitializer {
                     Chunk chunk = world.getChunk(cx, cz);
                     Box box = new Box(cx * 16, 0, cz * 16, cx * 16 + 16, 256, cz * 16 + 16);
 
-                    List<Entity> entities = world.getOtherEntities(player, box, true, e -> {
+                    List<Entity> entities = world.getOtherEntities(player, box, e -> {
                         if (e instanceof PlayerEntity) return false;
                         return e instanceof LivingEntity || e instanceof ItemEntity;
                     });
