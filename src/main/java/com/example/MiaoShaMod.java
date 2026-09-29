@@ -24,9 +24,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.WorldChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,32 +83,44 @@ public class MiaoShaMod implements ModInitializer {
         LOGGER.info("MiaoSha Mod Ultimate loaded [MC 1.16.5] - Global Thunder Erase!");
     }
 
-    /** 清除所有已加载区块中的生物与掉落物 */
+    /** 清除所有已加载区块（视距内）中的生物与掉落物 */
     private static void eraseAllLoadedChunks(PlayerEntity player) {
         if (player.getServer() == null) return;
         int cleared = 0;
         List<String> names = new ArrayList<>();
 
         for (ServerWorld world : player.getServer().getWorlds()) {
-            for (Chunk chunk : world.getChunkManager().getLoadedChunks()) {
-                if (!(chunk instanceof WorldChunk)) continue;
-                List<Entity> entities = new ArrayList<>();
-                ((WorldChunk) chunk).getEntities().forEach(entities::add);
+            int viewDist = player.getServer().getPlayerManager().getViewDistance();
+            int pcx = player.getBlockX() >> 4;
+            int pcz = player.getBlockZ() >> 4;
 
-                for (Entity e : entities) {
-                    if (e == null) continue;
-                    boolean isMob = e instanceof LivingEntity && !(e instanceof PlayerEntity);
-                    boolean isItem = e instanceof ItemEntity;
-                    if (!isMob && !isItem) continue;
+            for (int dx = -viewDist; dx <= viewDist; dx++) {
+                for (int dz = -viewDist; dz <= viewDist; dz++) {
+                    int cx = pcx + dx;
+                    int cz = pcz + dz;
+                    if (!world.isChunkLoaded(cx, cz)) continue;
 
-                    names.add(e.getDisplayName().getString());
-                    hardErase(e);
-                    cleared++;
+                    Chunk chunk = world.getChunk(cx, cz);
+                    Box box = new Box(cx * 16, 0, cz * 16, cx * 16 + 16, 256, cz * 16 + 16);
 
-                    // 纯装饰闪电
-                    LightningEntity bolt = new LightningEntity(world, e.getX(), e.getY(), e.getZ());
-                    bolt.setCosmetic(true);
-                    world.spawnEntity(bolt);
+                    List<Entity> entities = world.getOtherEntities(player, box, true, e -> {
+                        if (e instanceof PlayerEntity) return false;
+                        return e instanceof LivingEntity || e instanceof ItemEntity;
+                    });
+
+                    for (Entity e : entities) {
+                        names.add(e.getDisplayName().getString());
+                        hardErase(e);
+                        cleared++;
+
+                        // 1.16.5 正确创建装饰闪电
+                        LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
+                        if (bolt != null) {
+                            bolt.refreshPositionAndAngles(e.getX(), e.getY(), e.getZ(), 0F, 0F);
+                            bolt.setCosmetic(true);
+                            world.spawnEntity(bolt);
+                        }
+                    }
                 }
             }
         }
