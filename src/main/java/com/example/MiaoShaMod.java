@@ -13,6 +13,7 @@ import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.boss.dragon.EnderDragonEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -113,7 +114,7 @@ public class MiaoShaMod implements ModInitializer {
                         hardErase(e);
                         cleared++;
 
-                        // 1.16.5 正确创建装饰闪电
+                        // 1.16.5 装饰闪电
                         LightningEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
                         if (bolt != null) {
                             bolt.refreshPositionAndAngles(e.getX(), e.getY(), e.getZ(), 0F, 0F);
@@ -136,9 +137,16 @@ public class MiaoShaMod implements ModInitializer {
         }
     }
 
-    /** 湮灭剑：1.16.5 可靠三板斧 */
+    /** 湮灭剑：1.16.5 可靠三板斧 + 末影龙原生死亡 */
     public static void hardErase(Entity entity) {
         if (entity == null) return;
+
+        // 末影龙特判：必须走原生死亡流程，才能正常移除血条/开传送门
+        if (entity instanceof EnderDragonEntity) {
+            try { entity.kill(); } catch (Exception ignored) {}
+            return;
+        }
+
         if (entity instanceof LivingEntity) {
             try {
                 Field f = LivingEntity.class.getDeclaredField("health");
