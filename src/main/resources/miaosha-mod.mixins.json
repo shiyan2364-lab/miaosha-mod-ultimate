@@ -6,7 +6,8 @@
 		"LivingEntityDamageMixin",
 		"EntityEraseMixin",
 		"PlayerAttackMixin",
-		"TimeStopMixin"
+		"TimeStopMixin",
+		"LivingEntityTimeStopMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
