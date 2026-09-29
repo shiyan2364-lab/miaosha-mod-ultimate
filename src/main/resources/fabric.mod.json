@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "miaosha-mod-ultimate",
+	"version": "${version}",
+	"name": "秒杀模组 Ultimate",
+	"description": "秒杀之剑 + 湮灭之剑，独立物品栏，深层硬抹除",
+	"authors": ["Me!"],
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.example.MiaoShaMod"]
+	},
+	"mixins": [
+		"miaosha-mod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.16.5",
+		"java": ">=8"
+	},
+	"suggests": {
+		"fabric-api": "*"
+	}
+}
