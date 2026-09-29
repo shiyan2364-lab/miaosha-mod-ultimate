@@ -28,9 +28,9 @@ public class MiaoShaModClient implements ClientModInitializer {
             while (timeStopKey.wasPressed()) {
                 MiaoShaMod.TIME_STOPPED = !MiaoShaMod.TIME_STOPPED;
                 if (MiaoShaMod.TIME_STOPPED) {
-                    client.player.sendMessage(new LiteralText("Time stopped!"));
+                    client.player.sendMessage(new LiteralText("Time stopped!"), false);
                 } else {
-                    client.player.sendMessage(new LiteralText("Time resumed!"));
+                    client.player.sendMessage(new LiteralText("Time resumed!"), false);
                 }
             }
         });
