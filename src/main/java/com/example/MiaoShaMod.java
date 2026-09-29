@@ -24,8 +24,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.WorldChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,7 +42,6 @@ public class MiaoShaMod implements ModInitializer {
     public static final String MOD_ID = "miaosha-mod-ultimate";
     public static final Logger LOGGER = LogManager.getLogger("miaosha-mod-ultimate");
     public static final boolean KILL_PLAYER = true;
-    public static final int ERASE_RADIUS = 50;
     public static Item MIAOSHA_SWORD;
     public static Item MIAOSHA_ERASE_SWORD;
     public static Item UNKILLABLE_SPAWN_EGG;
@@ -75,31 +75,37 @@ public class MiaoShaMod implements ModInitializer {
             if (world.isClient) return TypedActionResult.pass(held);
             if (Registry.ITEM.getId(held.getItem())
                     .equals(new Identifier(MOD_ID, "miaosha_erase_sword"))) {
-                eraseArea(player);
+                eraseAllLoadedChunks(player);
                 return TypedActionResult.success(held);
             }
             return TypedActionResult.pass(held);
         });
-        LOGGER.info("MiaoSha Mod Ultimate loaded [MC 1.16.5] - Thunder Erase!");
+        LOGGER.info("MiaoSha Mod Ultimate loaded [MC 1.16.5] - Global Thunder Erase!");
     }
 
-    private static void eraseArea(PlayerEntity player) {
+    /** 清除所有已加载区块中的生物与掉落物 */
+    private static void eraseAllLoadedChunks(PlayerEntity player) {
         if (player.getServer() == null) return;
-        int r = ERASE_RADIUS;
-        Box box = new Box(player.getX() - r, player.getY() - r, player.getZ() - r,
-                player.getX() + r, player.getY() + r, player.getZ() + r);
         int cleared = 0;
         List<String> names = new ArrayList<>();
 
         for (ServerWorld world : player.getServer().getWorlds()) {
-            for (Entity e : world.getOtherEntities(player, box, entity -> true)) {
-                boolean isMob = e instanceof LivingEntity && !(e instanceof PlayerEntity);
-                boolean isItem = e instanceof ItemEntity;
-                if (isMob || isItem) {
+            for (Chunk chunk : world.getChunkManager().getLoadedChunks()) {
+                if (!(chunk instanceof WorldChunk)) continue;
+                List<Entity> entities = new ArrayList<>();
+                ((WorldChunk) chunk).getEntities().forEach(entities::add);
+
+                for (Entity e : entities) {
+                    if (e == null) continue;
+                    boolean isMob = e instanceof LivingEntity && !(e instanceof PlayerEntity);
+                    boolean isItem = e instanceof ItemEntity;
+                    if (!isMob && !isItem) continue;
+
                     names.add(e.getDisplayName().getString());
                     hardErase(e);
                     cleared++;
-                    // 纯装饰闪电：不造成伤害、不引火
+
+                    // 纯装饰闪电
                     LightningEntity bolt = new LightningEntity(world, e.getX(), e.getY(), e.getZ());
                     bolt.setCosmetic(true);
                     world.spawnEntity(bolt);
