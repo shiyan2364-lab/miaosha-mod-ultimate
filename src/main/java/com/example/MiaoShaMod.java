@@ -24,7 +24,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import org.slf4j.Logger;
@@ -81,12 +81,12 @@ public class MiaoShaMod implements ModInitializer {
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack stack = player.getStackInHand(hand);
-            if (world.isClient) return ActionResult.PASS;
+            if (world.isClient) return TypedActionResult.pass(held);
             if (Registries.ITEM.getId(stack.getItem()).equals(Identifier.of(MOD_ID, "miaosha_erase_sword"))) {
                 eraseAllLoadedChunks(player);
-                return ActionResult.SUCCESS;
+                return TypedActionResult.success(held);
             }
-            return ActionResult.PASS;
+            return TypedActionResult.pass(held);
         });
 
         LOGGER.info("MiaoSha Mod Ultimate 1.20.1 loaded!");
