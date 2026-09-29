@@ -2,6 +2,7 @@ package com.example.entity;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.world.World;
@@ -15,9 +16,11 @@ import java.lang.reflect.Field;
  * - setHealth(<=0) 忽略
  * - getHealth() 至少返回 1，防止被判定死亡
  * - kill() 空实现，免疫/kill
- * - remove() 仅在自然死亡时生效（硬抹除会被拦截）
- * - isRemoved() 永远 false（引擎认为它一直在）
- * - tick() 每帧反射修复 health / removed 字段（被强改也拉回来）
+ * - remove(RemovalReason) 仅在自然死亡(KILLED)时放行，其余全部拦截
+ * - isRemoved() 永远 false
+ * - setRemoved() 空实现，强移除被拦截
+ * - isAlive() 永远 true
+ * - tick() 每帧反射修复 health / removed 字段
  */
 public class UnkillableEntity extends PigEntity {
 
@@ -80,7 +83,6 @@ public class UnkillableEntity extends PigEntity {
 
     @Override
     public void remove(Entity.RemovalReason reason) {
-        // 只有自然死亡（KILLED）才允许移除，其余全部拦截
         if (reason == Entity.RemovalReason.KILLED && this.isDead()) {
             super.remove(reason);
         }
