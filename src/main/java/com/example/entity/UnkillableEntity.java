@@ -82,10 +82,11 @@ public class UnkillableEntity extends PigEntity {
         // 完全忽略移除请求
     }
 
-    @Override
-    public boolean isRemoved() {
-        return false;
-    }
+    /**
+     * 注意：1.16.5 中 Entity 没有 public isRemoved() 可覆写方法（已删除）。
+     * 本生物的防御由 remove() 空实现 + tick() 反射修复 removed 字段承担。
+     */
+    // （isRemoved 删除，移除防御由 remove() + tick 反射修复负责）
 
     @Override
     public void kill() {
