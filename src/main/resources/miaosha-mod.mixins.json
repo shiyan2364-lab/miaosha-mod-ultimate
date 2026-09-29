@@ -1,13 +1,14 @@
 {
-"required": true,
-"package": "com.example.mixin",
-"compatibilityLevel": "JAVA_8",
-"mixins": [
-"LivingEntityDamageMixin",
-"EntityEraseMixin",
-"PlayerAttackMixin"
-],
-"injectors": {
-"defaultRequire": 1
-}
+	"required": true,
+	"package": "com.example.mixin",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"LivingEntityDamageMixin",
+		"EntityEraseMixin",
+		"PlayerAttackMixin",
+		"TimeStopMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

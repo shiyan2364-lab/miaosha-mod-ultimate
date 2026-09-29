@@ -3,12 +3,13 @@
 	"id": "miaosha-mod-ultimate",
 	"version": "${version}",
 	"name": "秒杀模组 Ultimate",
-	"description": "秒杀之剑 + 湮灭之剑，独立物品栏，深层硬抹除",
+	"description": "秒杀之剑 + 湮灭之剑，独立物品栏，深层硬抹除，区域清除，时停",
 	"authors": ["Me!"],
 	"license": "CC0-1.0",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["com.example.MiaoShaMod"]
+		"main": ["com.example.MiaoShaMod"],
+		"client": ["com.example.client.MiaoShaModClient"]
 	},
 	"mixins": [
 		"miaosha-mod.mixins.json"
